@@ -1,0 +1,104 @@
+\documentclass[a4paper]{article}
+\usepackage[square,sort,comma,numbers]{natbib}
+\usepackage{blindtext} % Package to generate dummy text
+\usepackage{charter} % Use the Charter font
+\usepackage[utf8]{inputenc} % Use UTF-8 encoding
+\usepackage[T1]{fontenc}
+\usepackage{microtype} % Slightly tweak font spacing for aesthetics
+\usepackage{amsthm, amsmath, amssymb} % Mathematical typesetting
+\usepackage{float} % Improved interface for floating objects
+\usepackage{hyperref} % For hyperlinks in the PDF
+\usepackage{graphicx, multicol} % Enhanced support for graphics
+\usepackage{xcolor} % Driver-independent color extensions
+\usepackage{pseudocode} % Environment for specifying algorithms in a natural way
+\usepackage{datetime} % Uses YEAR-MONTH-DAY format for dates
+
+\addtolength{\hoffset}{-2.25cm}
+\addtolength{\textwidth}{4.5cm}
+\addtolength{\voffset}{-3.25cm}
+\addtolength{\textheight}{5cm}
+
+\setlength{\parskip}{1ex}
+\setlength{\parindent}{0in}
+
+\DeclareUnicodeCharacter{03B1}{$\alpha$}
+
+\usepackage{fancyhdr} % Headers and footers
+\pagestyle{fancy} % All pages have headers and footers
+\fancyhead{}\renewcommand{\headrulewidth}{0pt} % Blank out the default header
+\fancyfoot[L]{} % Custom footer text
+\fancyfoot[C]{} % Custom footer text
+\fancyfoot[R]{\thepage} % Custom footer text
+\newcommand{\note}[1]{\marginpar{\scriptsize \textcolor{red}{#1}}} % Enables comments in red on margin
+
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+%-------------------------------
+%	TITLE SECTION (do not modify unless you really need to)
+%-------------------------------
+\fancyhead[C]{}
+\hrule \medskip
+\begin{minipage}{0.295\textwidth}
+    \raggedright
+    \hfill\\
+    % \footnotesize
+    % Start: 24.4.2023\\
+    % Return: 19.5.2023 \hfill\\
+    % \href{https://classroom.github.com/classrooms/124387260-hpi-artificial-intelligence-teaching-pml-classroom}{https://classroom.github.com}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+    \centering
+    \large
+    Note on Lecture 2\\
+    \normalsize
+    Matching the Probit and Logit Function\\
+\end{minipage}
+\begin{minipage}{0.295\textwidth}
+    \raggedleft
+    \hfill\\
+\end{minipage}
+\medskip\hrule
+\bigskip
+
+%-------------------------------
+%	ASSIGNMENT CONTENT 
+%-------------------------------
+
+\section*{Background}
+In the lecture, we have seen both the logit and Probit functions defined by
+\begin{align}
+    \mathrm{logit}(x) & := \frac{\exp(x)}{1+\exp(x)} \,, \label{eq:logit} \\
+    \Phi(x) & := \int_{-\infty}^x \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{t^2}{2}\right)\, dt \label{eq:probit} \,. 
+\end{align}
+Both of these functions have the property that they maps the real line $\mathbb{R}$ to the interval $(0,1)$ with a monotonically increasing function. What we would like to show is that the two function have the same derivative at zero if we use $\mathrm{logit}(x)$ and $\Phi\left(\sqrt{\frac{\pi}{8}}x\right)$.
+
+\section*{Derivation}
+In order to derive the above equation, let us first derive the first derivative of the logit function \eqref{eq:logit}. 
+\begin{align*}
+    \frac{d\ \mathrm{logit}(x)}{dx} & = \frac{d\exp(x)\cdot(1+\exp(x))^{-1}}{dx} \\
+    & = \frac{d\exp(x)}{dx}\cdot(1+\exp(x))^{-1} + \exp(x)\cdot \frac{d(1+\exp(x))^{-1}}{dx} \\
+    & = \exp(x)\cdot(1+\exp(x))^{-1} + \exp(x)\cdot \left(-(1+\exp(x))^{-2}\exp(x)\right) \\
+    & = \exp(x)\cdot(1+\exp(x))^{-1}\cdot\left[1 - \exp(x)\cdot(1+\exp(x))^{-1}\right] \\
+    & = \mathrm{logit}(x)\cdot\left[1 - \mathrm{logit}(x)\right] \, 
+\end{align*}
+where the second line follows from the product rule of differentiation, the third line from carrying out the individual derivatives, the fourth line from factoring out the coming factor $\exp(x)\cdot(1+\exp(x))^{-1}$ and the final line from reusing the definition \eqref{eq:logit}.
+
+As a next step, let us now derive the first derivative of the Probit function \eqref{eq:probit} when we scale the input argument by a factor $c$.
+\begin{align*}
+    \frac{d\Phi(c\cdot x)}{dx} & =  \frac{d\Phi(c\cdot x)}{d(c\cdot x)} \cdot \frac{d(c\cdot x)}{dx} \\
+    & = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{(c\cdot x)^2}{2}\right) \cdot c \,,
+\end{align*}
+where the first line follows from the chain rule of differentiation and the second line from carrying out the individual derivatives.
+
+Thus, in order to match the derivative at zero, we need to find the value $c$ such as that 
+\begin{align*}
+    \left.\frac{d\Phi(c\cdot x)}{dx}\right|_{x=0} & = \left.\frac{d\ \mathrm{logit}(x)}{dx}\right|_{x=0} \\
+    \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{(0\cdot c)^2}{2}\right) \cdot c & = \mathrm{logit}(0)\cdot\left[1 - \mathrm{logit}(0)\right] \\
+    \frac{1}{\sqrt{2\pi}} \cdot c & = \frac{1}{4} \\
+    c & = \sqrt{\frac{2\cdot \pi}{16}} = \sqrt{\frac{\pi}{8}} \,,
+\end{align*}
+which proves that $\mathrm{logit}(x)$ and $\Phi\left(\sqrt{\frac{\pi}{8}}x\right)$ have the same derivative at zero.
+
+\end{document}
