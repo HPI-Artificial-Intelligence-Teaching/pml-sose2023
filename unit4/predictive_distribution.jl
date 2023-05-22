@@ -115,7 +115,7 @@ function plot_Bayesian_fit(train_data; σ=0.1, τ=0.5, ϕ=x -> map(j -> polynomi
     
     # compute the mean and standard deviation of the predictive distribution over all test points 
     xs = collect(range(-0.3,1.3,100))
-    Φ_test = generate_features(xs, ϕ=ϕ)
+    Φ_test = transpose(hcat([ϕ(x) for x in xs]...))
     pred = map(ϕ -> (vec(μ)'*ϕ, sqrt(σ^2+ϕ'*S*ϕ)), eachrow(Φ_test))
     plot!(xs,map(x->x[1],pred), ribbon=map(x->x[2],pred), fillalpha=0.2, linewidth=3, color=color)
 end
