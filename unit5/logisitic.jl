@@ -204,7 +204,7 @@ function learn_logistic_regression(
     end
 
     # plot the mean of the weight vector distribution
-    heatmap(
+    p = heatmap(
         plot_transform(w),
         colormap = :grays,
         legend = false,
@@ -213,6 +213,7 @@ function learn_logistic_regression(
         yaxis = nothing,
         bordercolor = :white,
     )
+    display(p)
 end
 
 X, y = extract_data(500)

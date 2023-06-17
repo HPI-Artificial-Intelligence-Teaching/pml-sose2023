@@ -184,7 +184,7 @@ function learn_bayes_logistic_regression(
     Σ = pinv(X' * R * X + 2 / τ^2 * Diagonal(ones(size(X, 2))))
 
     # plot the mean of the weight vector distribution
-    heatmap(
+    p = heatmap(
         plot_transform(μ),
         colormap = :grays,
         legend = false,
@@ -193,10 +193,11 @@ function learn_bayes_logistic_regression(
         yaxis = nothing,
         bordercolor = :white,
     )
+    display(p)
     savefig(base * "_mean.png")
 
     # plot the variance of the weight vector distribution
-    heatmap(
+    p = heatmap(
         plot_transform(diag(Σ)),
         colormap = :grays,
         legend = false,
@@ -205,6 +206,7 @@ function learn_bayes_logistic_regression(
         yaxis = nothing,
         bordercolor = :white,
     )
+    display(p)
     savefig(base * "_variance.png")
 end
 

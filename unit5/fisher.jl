@@ -98,6 +98,94 @@ function plot_MNIST(
     display(p)
 end
 
+"""
+    learn_DFA(n=250; class0=1, class1=9, ϵ=1e-4, τ = 0.1)
+
+Learns a logisit regression model for `n` examples of the MNIST examples of the digits with the label `class0` and `class1` and outputs the learned weight vector as an image (using `ϵ` as a stopping criterion)
+"""
+function learn_FDA(
+    n = 250;
+    class0 = 1,
+    class1 = 9,
+    base = "~/Downloads/bayes_log",
+)
+    # transformation on a weight vector to plot it as an image
+    function plot_transform(x)
+        return (hcat(map(r -> r[28:-1:1], eachrow(reshape(x[(28*28):-1:1], 28, 28)'))...)')
+    end
+
+    # plot the raw data 
+    y = MNIST(split = :train).targets
+    X = MNIST(split = :train).features
+    idx0 = range(1, length(y))[y.==class0]
+    idx1 = range(1, length(y))[y.==class1]
+    X0 = hcat(map(i -> vec(X[:, :, idx0[i]]), 1:n)...)'
+    X1 = hcat(map(i -> vec(X[:, :, idx1[i]]), 1:n)...)'
+
+    # augment the data with a one column for the bias and concatenate the two datasets
+    m0 = mean(X0, dims = 1)'
+    m1 = mean(X1, dims = 1)'
+    S = zeros(size(X0, 2), size(X0, 2))
+    for x in eachrow(X0)
+        S += (x - m0) * (x - m0)'
+    end
+    for x in eachrow(X1)
+        S += (x - m1) * (x - m1)'
+    end
+
+    w = pinv(S) * (m1 - m0)
+
+    # plot the mean of class0
+    p = heatmap(
+        plot_transform(m0),
+        colormap = :grays,
+        legend = false,
+        aspect_ratio = :equal,
+        xaxis = nothing,
+        yaxis = nothing,
+        bordercolor = :white,
+    )
+    display(p)
+
+    # plot the mean of class1
+    p = heatmap(
+        plot_transform(m1),
+        colormap = :grays,
+        legend = false,
+        aspect_ratio = :equal,
+        xaxis = nothing,
+        yaxis = nothing,
+        bordercolor = :white,
+    )
+    display(p)
+
+    # plot the mean difference
+    p = heatmap(
+        plot_transform(m0 - m1),
+        colormap = :grays,
+        legend = false,
+        aspect_ratio = :equal,
+        xaxis = nothing,
+        yaxis = nothing,
+        bordercolor = :white,
+    )
+    display(p)
+
+    # plot the mean of FDA solution
+    p = heatmap(
+        plot_transform(w),
+        colormap = :grays,
+        legend = false,
+        aspect_ratio = :equal,
+        xaxis = nothing,
+        yaxis = nothing,
+        bordercolor = :white,
+    )
+    display(p)
+end
+
+
 plot_MNIST(w = [1; 1; -0.25])
 plot_MNIST(w = [1; -1; 0.05])
 plot_MNIST(compute_FDA = true)
+learn_FDA(1000)
