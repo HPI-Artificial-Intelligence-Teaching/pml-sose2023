@@ -38,7 +38,7 @@ function extract_data(n = 9; class0 = 1, class1 = 8)
 end
 
 """
-    plot_logistic_regression(n=250; class0_color = :red, class1_color = :blue, class0=1, class1=9 no_iterations=3)
+    plot_logistic_regression(n=250; class0_color = :red, class1_color = :blue, class0=1, class1=9, no_iterations = 10, τ = 0.1)
 
 Plots `n` examples of MNIST image feature vectors (top- and bottom-half average pixel intensity) where the one class is the digits with the label `class0` and the other class is the digits with the label `class1` (using the colors `class0_color` and `class1_color`, respectively). Then performs the logistic regression learning and plots the decision surface.
 """
@@ -130,6 +130,84 @@ function plot_bayes_logistic_regression(
     display(p)
 end
 
+"""
+    learn_logistic_regression(n=250; class0=1, class1=9, ϵ=1e-4, τ = 0.1)
+
+Learns a logisit regression model for `n` examples of the MNIST examples of the digits with the label `class0` and `class1` and outputs the learned weight vector as an image (using `ϵ` as a stopping criterion)
+"""
+function learn_bayes_logistic_regression(
+    n = 250;
+    class0 = 1,
+    class1 = 9,
+    ϵ = 1e-4,
+    τ = 0.1,
+    base = "~/Downloads/bayes_log",
+)
+    # transformation on a weight vector to plot it as an image
+    function plot_transform(x)
+        return (hcat(map(r -> r[28:-1:1], eachrow(reshape(x[(28*28):-1:1], 28, 28)'))...)')
+    end
+
+    # plot the raw data 
+    y = MNIST(split = :train).targets
+    X = MNIST(split = :train).features
+    idx0 = range(1, length(y))[y.==class0]
+    idx1 = range(1, length(y))[y.==class1]
+    X0 = hcat(map(i -> vec(X[:, :, idx0[i]]), 1:n)...)'
+    X1 = hcat(map(i -> vec(X[:, :, idx1[i]]), 1:n)...)'
+    mn = (sum(X1, dims = 1) + sum(X0, dims = 1)) / (2 * n)
+    X0 -= repeat(mn, n)
+    X1 -= repeat(mn, n)
+
+    # augment the data with a one column for the bias and concatenate the two datasets
+    X = vcat(X0, X1)
+    y = vcat(zeros(n, 1), 1 * ones(n, 1))
+    μ = zeros(size(X, 2), 1)
+
+    Δ = 2 * ϵ
+    while (Δ > ϵ)
+        t = X * μ
+        g = exp.(t) ./ (1 .+ exp.(t))
+        R = Diagonal(vec(g .* (1 .- g)))
+        Δμ =
+            inv(X' * R * X + 2 / τ^2 * Diagonal(ones(size(X, 2)))) *
+            (X' * (g - y) + 2 / τ^2 * μ)
+        μ -= Δμ
+        Δ = norm(Δμ)
+        println("Δ = ", Δ)
+    end
+
+    # compute the inverse of the Hessian for the covariance
+    t = X * μ
+    g = exp.(t) ./ (1 .+ exp.(t))
+    R = Diagonal(vec(g .* (1 .- g)))
+    Σ = pinv(X' * R * X + 2 / τ^2 * Diagonal(ones(size(X, 2))))
+
+    # plot the mean of the weight vector distribution
+    heatmap(
+        plot_transform(μ),
+        colormap = :grays,
+        legend = false,
+        aspect_ratio = :equal,
+        xaxis = nothing,
+        yaxis = nothing,
+        bordercolor = :white,
+    )
+    savefig(base * "_mean.png")
+
+    # plot the variance of the weight vector distribution
+    heatmap(
+        plot_transform(diag(Σ)),
+        colormap = :grays,
+        legend = false,
+        aspect_ratio = :equal,
+        xaxis = nothing,
+        yaxis = nothing,
+        bordercolor = :white,
+    )
+    savefig(base * "_variance.png")
+end
+
 plot_bayes_logistic_regression(50, τ = 20)
 savefig("~/Downloads/bayes_logistic_50_tau=20.png")
 plot_bayes_logistic_regression(50, τ = 100)
@@ -138,3 +216,7 @@ plot_bayes_logistic_regression(250, τ = 5)
 savefig("~/Downloads/bayes_logistic_250_tau=5.png")
 plot_bayes_logistic_regression(250, τ = 20)
 savefig("~/Downloads/bayes_logistic_250_tau=20.png")
+
+learn_bayes_logistic_regression(1000, class0 = 1, class1 = 8, base="~/Downloads/bayes_logistic_1_vs_8")
+learn_bayes_logistic_regression(1000, class0 = 1, class1 = 9, base="~/Downloads/bayes_logistic_1_vs_9")
+learn_bayes_logistic_regression(1000, class0 = 3, class1 = 4, base="~/Downloads/bayes_logistic_3_vs_4")

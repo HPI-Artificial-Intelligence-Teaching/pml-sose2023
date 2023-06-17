@@ -87,7 +87,7 @@ function plot_scale_video(; n = 9, y_max = 150, filename = "~/Downloads/logit_sc
 end
 
 """
-    plot_logistic_regression(n=250; class0_color = :red, class1_color = :blue, class0=1, class1=9 no_iterations=3)
+    plot_logistic_regression(n=250; class0_color = :red, class1_color = :blue, class0=1, class1=9, no_iterations=3)
 
 Plots `n` examples of MNIST image feature vectors (top- and bottom-half average pixel intensity) where the one class is the digits with the label `class0` and the other class is the digits with the label `class1` (using the colors `class0_color` and `class1_color`, respectively). Then performs the logistic regression learning and plots the decision surface.
 """
@@ -157,6 +157,62 @@ function plot_logistic_regression(
     xlabel!(L"x_1")
     ylabel!(L"x_2")
     display(p)
+end
+
+"""
+    learn_logistic_regression(n=250; class0=1, class1=9, ϵ=1e-4)
+
+Learns a logisit regression model for `n` examples of the MNIST examples of the digits with the label `class0` and `class1` and outputs the learned weight vector as an image (using `ϵ` as a stopping criterion)
+"""
+function learn_logistic_regression(
+    n = 250;
+    class0 = 1,
+    class1 = 9,
+    no_iterations = 3,
+)
+    # transformation on a weight vector to plot it as an image
+    function plot_transform(x)
+        return (hcat(map(r -> r[28:-1:1], eachrow(reshape(x[(28*28):-1:1], 28, 28)'))...)')
+    end
+
+    # plot the raw data 
+    y = MNIST(split = :train).targets
+    X = MNIST(split = :train).features
+    idx0 = range(1, length(y))[y.==class0]
+    idx1 = range(1, length(y))[y.==class1]
+    X0 = hcat(map(i -> vec(X[:, :, idx0[i]]), 1:n)...)'
+    X1 = hcat(map(i -> vec(X[:, :, idx1[i]]), 1:n)...)'
+    mn = (sum(X1, dims = 1) + sum(X0, dims = 1)) / (2 * n)
+    X0 -= repeat(mn, n)
+    X1 -= repeat(mn, n)
+
+    # augment the data with a one column for the bias and concatenate the two datasets
+    X = vcat(X0, X1)
+    y = vcat(zeros(n, 1), 1 * ones(n, 1))
+    w = zeros(size(X,2), 1)
+
+    # Δ = 2 * ϵ
+    # while (Δ > ϵ)
+    for i = 1:no_iterations
+        t = X * w
+        g = exp.(t) ./ (1 .+ exp.(t))
+        R = Diagonal(vec(g .* (1 .- g)))
+        Δw = pinv(X' * R * X) * (X' * (g - y))
+        w -= Δw
+        Δ = norm(Δw)
+        println("Δ = ", Δ)
+    end
+
+    # plot the mean of the weight vector distribution
+    heatmap(
+        plot_transform(w),
+        colormap = :grays,
+        legend = false,
+        aspect_ratio = :equal,
+        xaxis = nothing,
+        yaxis = nothing,
+        bordercolor = :white,
+    )
 end
 
 X, y = extract_data(500)
