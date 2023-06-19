@@ -109,7 +109,7 @@ function plot_bayes_logistic_regression(
     # plot the posterior probability of each class prediction 
     X = range(start = x_min, stop = x_max, length = 100)
     Y = range(start = y_min, stop = y_max, length = 100)
-    p = heatmap!(X, Y, (x1, x2) -> posterior(x1, x2), legend = false, color = :berlin)
+    p = heatmap(X, Y, (x1, x2) -> posterior(x1, x2), legend = false, color = :berlin)
     plot!(
         X0[:, 1],
         X0[:, 2],
