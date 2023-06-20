@@ -6,7 +6,7 @@ using Test
 @testset "RBF Kernel implementation" begin
     x1 = [1,2,6,8,10]
     x2 = [1,2,6,8,5]
-    theta = (1, 2, [1])
+    theta = (1, 2, [1, 1, 1, 1, 1])
     result = rbf_kernel(x1,x2, theta)
     @test isapprox(result, 1.3887943864964021e-11)
 end
@@ -14,7 +14,7 @@ end
 @testset "OU Kernel implementation" begin
     x1 = [1,2,6,8,10]
     x2 = [1,2,6,8,5]
-    theta = (1, 2, [1])
+    theta = (1, 2, [1, 1, 1, 1, 1])
     result = ou_kernel(x1,x2, theta)
     @test isapprox(result, 0.006737946999085467)
 end
@@ -67,14 +67,14 @@ end
     @test isapprox(grad_rbf(x[3,:], gp.X[3, :], gp.theta), [0,0,0])
 end
 
-@testset "grad_loglik implementation" begin
+@testset "grad_logmlik implementation" begin
     x = [1,2,6,8,10]
     y = sin.(x) + x
     theta = (1, 2, [1])
 
     gaussian_process = train_gp(x, vec(y).-mean(y), rbf_kernel, theta)
 
-    @test isapprox(grad_loglik(gaussian_process), [-0.0, -0.0, 0.4696765605323389])
+    @test isapprox(grad_logmlik(gaussian_process), [-0.0, -0.0, 0.4696765605323389])
 end
 
 @testset "predict_gp implementation" begin
