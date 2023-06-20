@@ -240,18 +240,18 @@ end
 # plot the GP prior
 Random.seed!(42)
 plot_GP_prior(
-    (x1, x2) -> RBF_kernel(x1, x2, λ = 0.5),
+    (x1, x2) -> RBF_kernel(x1, x2, λ = 0.000005),
     color = :red,
     file_name = "~/Downloads/GP_prior_RBF.svg",
 )plot_GP_prior(
-    (x1, x2) -> OU_kernel(x1, x2, λ = 2),
+    (x1, x2) -> OU_kernel(x1, x2, λ = 20000),
     color = :red,
     file_name = "~/Downloads/GP_prior_OU.svg",
 )
 
 # plot the GP posterior
 Random.seed!(41)
-train_data = generate_data(11, x -> sin(x * π), σ = 0.15, from = 0, to = 1)
+train_data = generate_data(101, x -> sin(x * π), σ = 0.55, from = 0, to = 1)
 
 p = plot(
     train_data.x,
@@ -313,3 +313,4 @@ savefig(p, "~/Downloads/GP_OU_fit.svg")
 Random.seed!(41)
 train_data = generate_data(11, x -> sin(x * π), σ = 0.15, from = 0, to = 1)
 plot_GP_evidence_maximization(train_data; base_name = "~/Downloads/")
+
