@@ -3,6 +3,7 @@ using Distributions
 
 using Test
 
+
 @testset "RBF Kernel implementation" begin
     x1 = [1,2,6,8,10]
     x2 = [1,2,6,8,5]
@@ -20,9 +21,9 @@ end
 end
 
 @testset "kernelmat implementation" begin
-    x1 = [1,2,6,8,10]
+    x1 = [1,2,6,8,10] #Note that each observation is now a real number
     x2 = [1,2,6,8,5]
-    theta = (1, 0.000001, [1, 1, 1, 1, 1])
+    theta = (1, 0.000001, [1])
     C = kernelmat(x1, x2, rbf_kernel, theta)
     @test size(C) == (5,5)
     @test isapprox(1.000001, C[1,1])
@@ -35,7 +36,7 @@ end
 @testset "train_gp implementation" begin
     x = [1,2,6,8,10]
     y = sin.(x) + x
-    theta = (1, 2, [1, 1, 1, 1, 1])
+    theta = (1, 2, [1])
 
     gaussian_process = train_gp(x, vec(y).-mean(y), rbf_kernel, theta)
     @test isapprox(gaussian_process.X, x)
@@ -48,7 +49,7 @@ end
 @testset "log_m_likelihood implemenation" begin
     x = [1,2,6,8,10]
     y = sin.(x) + x
-    theta = (1, 2, [1, 1, 1, 1, 1])
+    theta = (1, 2, [1])
 
     gaussian_process = train_gp(x, vec(y).-mean(y), rbf_kernel, theta)
     @test isapprox(log_m_likelihood(gaussian_process), -14.828870588181731)
@@ -58,7 +59,7 @@ end
 @testset "grad_rbf implemenation" begin
     x = [1,2,6,8,10]
     y = sin.(x) + x
-    theta = (1, 2, [1, 1, 1, 1, 1])
+    theta = (1, 2, [1])
 
     gp = train_gp(x, vec(y).-mean(y), rbf_kernel, theta)
 
@@ -70,7 +71,7 @@ end
 @testset "grad_loglik implementation" begin
     x = [1,2,6,8,10]
     y = sin.(x) + x
-    theta = (1, 2, [1, 1, 1, 1, 1])
+    theta = (1, 2, [1])
 
     gaussian_process = train_gp(x, vec(y).-mean(y), rbf_kernel, theta)
 
@@ -81,7 +82,7 @@ end
     x = [1,2,6,8,10]
     x_pred = [3,5,7,9]
     y = sin.(x) + x
-    theta = (1, 2, [1, 1, 1, 1, 1])
+    theta = (1, 2, [1])
 
     gaussian_process = train_gp(x, vec(y).-mean(y), rbf_kernel, theta)
 
