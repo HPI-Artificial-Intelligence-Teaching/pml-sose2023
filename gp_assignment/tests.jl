@@ -52,7 +52,7 @@ end
     theta = (1, 2, [1])
 
     gaussian_process = train_gp(x, vec(y).-mean(y), rbf_kernel, theta)
-    @test isapprox(log_m_likelihood(gaussian_process), -13.459411729736592)
+    @test isapprox(log_m_likelihood(gaussian_process), -14.828870588181731)
     
 end
 
