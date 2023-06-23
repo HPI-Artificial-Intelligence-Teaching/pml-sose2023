@@ -179,11 +179,36 @@ end
 #     @test norm(x_star) < 1e-1
 
 # end
-# @testset "find_theta implementation" begin
-#     x = [1,2,6,8,10]
-#     y = sin.(x) + x
-#     theta = (1, 2, [1])
-#     result = find_theta(x,y,theta)
+
+# test makes sure that your find_theta indeed increases the log m log_m_likelihood
+@testset "find_theta implementation" begin
+    #initialize data and theta
+    x = [1,2,6,8,10]
+    y = sin.(x) + x
+    theta_init = (1, 1, [3])
     
-#     @test isapprox(result[1], [1.0, 2.0, 0.33575944838962485])
-# end
+    #train initial gp and compute log_m_likelihood
+    gp_init = train_gp(x, y .-mean(y), rbf_kernel, theta_init)
+    ll_init = log_m_likelihood(gp_init)
+    
+    #run find_theta for small number of iterations w. small stepsize
+    #comment out status if not used and changed arguments of find_theta
+    #function if applicable
+    theta_star, status = find_theta(x, y .- mean(y), theta_init;
+                                stepsize = 1e-5,
+                                eps = 1e-3,
+                                max_iter = 10)
+    
+    #convert theta back to tuple representation, comment out if necessary
+    theta_star = (theta_star[1], theta_star[2], theta_star[3:end])
+    
+    #train gp w. found parameters
+    gp_star = train_gp(x, y .-mean(y), rbf_kernel, theta_star)
+
+    #compare both log_m_likelihoods
+    ll_star = log_m_likelihood(gp_star)
+    
+    @test ll_init < ll_star
+    @test theta_star[1:2] == (1.0, 1.0) #test that first two dimensions did not change
+    @test theta_star[3] <= theta_init[3] #test that l-scale moved in right direction
+end
