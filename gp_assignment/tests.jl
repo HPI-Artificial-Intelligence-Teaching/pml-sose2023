@@ -91,6 +91,94 @@ end
     @test isapprox(variance,[2.9546452357668618, 2.954886731886043, 2.910322486486357, 2.910322486486357])
 end
 
+
+# The next testset is in case you want to implement gradient descent
+# with status return value. However, if you want to debug your gradient 
+# descent in another way there is another test set further down
+@testset "gradientdescent w. status" begin
+    # Let us minimize the function x[1]^2 + x[2]^2 using gradient descent
+    # the gradient ist given by the following function
+    f(x) = x[1]^2 + x[2]^2
+    f_grad(x) = [2*x[1], 2*x[2]]
+
+    ## First Check: moving in right direction
+    x_star, status = gradientdescent(f_grad, 
+    [1, 20],
+    [[0, 0] [100, 100]],
+    stepsize = 1e-10,
+    eps = 1e-1,
+    max_iter = 2)
+
+    # After two tiny steps value of the function should be smaller than at initialization:
+    @test f(x_star) < f([1, 20])
+
+    # After some steps, x_star should be "relatively" close to 0 ;)
+    x_star, status = gradientdescent(f_grad, 
+                    [1, 20],
+                    [[0, 0] [100, 100]],
+                    stepsize = 1e-1,
+                    eps = 1e-1,
+                    max_iter = 50)
+
+
+    @test norm(x_star) < 1e-1
+    @test status == 1
+
+    # be careful about stepsize
+    x_star, status = gradientdescent(f_grad, 
+                    [1, 20],
+                    [[0, 0] [100, 100]],
+                    stepsize = 1e1,
+                    eps = 1e-1,
+                    max_iter = 2)
+
+    @test status == 10
+
+
+    # be careful about stepsize
+    x_star, status = gradientdescent(f_grad, 
+                    [-1, -20],
+                    [[0, 0] [100, 100]],
+                    stepsize = 1e1,
+                    eps = 1e-1,
+                    max_iter = 2)
+
+
+
+    @test status == -10
+end
+
+
+# Gradient descent without status, uncomment if applicable.
+# @testset "gradientdescent w/0 status" begin
+#     # Let us minimize the function x[1]^2 + x[2]^2 using gradient descent
+#     # the gradient ist given by the following function
+#     f(x) = x[1]^2 + x[2]^2
+#     f_grad(x) = [2*x[1], 2*x[2]]
+
+#     ## First Check: moving in right direction
+#     x_star = gradientdescent(f_grad, 
+#     [1, 20],
+#     [[0, 0] [100, 100]],
+#     stepsize = 1e-10,
+#     eps = 1e-1,
+#     max_iter = 2)
+
+#     # After two tiny steps value of the function should be smaller than at initialization:
+#     @test f(x_star) < f([1, 20])
+
+#     # After some steps, x_star should be "relatively" close to 0 ;)
+#     x_star = gradientdescent(f_grad, 
+#                     [1, 20],
+#                     [[0, 0] [100, 100]],
+#                     stepsize = 1e-1,
+#                     eps = 1e-1,
+#                     max_iter = 50)
+
+
+#     @test norm(x_star) < 1e-1
+
+# end
 # @testset "find_theta implementation" begin
 #     x = [1,2,6,8,10]
 #     y = sin.(x) + x
