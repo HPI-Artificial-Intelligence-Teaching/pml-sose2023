@@ -210,5 +210,5 @@ end
     
     @test ll_init < ll_star
     @test theta_star[1:2] == (1.0, 1.0) #test that first two dimensions did not change
-    @test theta_star[3] <= theta_init[3] #test that l-scale moved in right direction
+    @test theta_star[3] < theta_init[3] #test that l-scale moved in right direction
 end
