@@ -1,0 +1,207 @@
+\documentclass[a4paper]{article}
+\usepackage[square,sort,comma,numbers]{natbib}
+\usepackage{blindtext} % Package to generate dummy text
+\usepackage{charter} % Use the Charter font
+\usepackage[utf8]{inputenc} % Use UTF-8 encoding
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{microtype} % Slightly tweak font spacing for aesthetics
+\usepackage{amsthm, amsmath, amssymb} % Mathematical typesetting
+\usepackage{float} % Improved interface for floating objects
+\usepackage{hyperref} % For hyperlinks in the PDF
+\usepackage{graphicx, multicol} % Enhanced support for graphics
+\usepackage{xcolor} % Driver-independent color extensions
+\usepackage{pseudocode} % Environment for specifying algorithms in a natural way
+\usepackage{datetime} % Uses YEAR-MONTH-DAY format for dates
+
+\addtolength{\hoffset}{-2.25cm}
+\addtolength{\textwidth}{4.5cm}
+\addtolength{\voffset}{-3.25cm}
+\addtolength{\textheight}{5cm}
+
+\setlength{\parskip}{1ex}
+\setlength{\parindent}{0in}
+
+\DeclareUnicodeCharacter{03B1}{$\alpha$}
+
+\usepackage{fancyhdr} % Headers and footers
+\pagestyle{fancy} % All pages have headers and footers
+\fancyhead{}\renewcommand{\headrulewidth}{0pt} % Blank out the default header
+\fancyfoot[L]{} % Custom footer text
+\fancyfoot[C]{} % Custom footer text
+\fancyfoot[R]{\thepage} % Custom footer text
+\newcommand{\note}[1]{\marginpar{\scriptsize \textcolor{red}{#1}}} % Enables comments in red on margin
+\newtheorem{thm}{Theorem}
+\newtheorem{cor}{Corollary}
+
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+%-------------------------------
+%	TITLE SECTION (do not modify unless you really need to)
+%-------------------------------
+\fancyhead[C]{}
+\hrule \medskip
+\begin{minipage}{0.295\textwidth}
+    \raggedright
+    \hfill\\
+    % \footnotesize
+    % Start: 24.4.2023\\
+    % Return: 19.5.2023 \hfill\\
+    % \href{https://classroom.github.com/classrooms/124387260-hpi-artificial-intelligence-teaching-pml-classroom}{https://classroom.github.com}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+    \centering
+    \large
+    On 1D-Gaussians\\
+    \normalsize
+    Efficient Operations on Gaussian Distributions\\
+\end{minipage}
+\begin{minipage}{0.295\textwidth}
+    \raggedleft
+    \hfill\\
+\end{minipage}
+\medskip\hrule
+\bigskip
+
+%-------------------------------
+%	ASSIGNMENT CONTENT 
+%-------------------------------
+
+\section*{Representations}
+In practice, we often work with non-normalized one-dimensional Gaussian distributions which can be represented in two different ways:
+\begin{align}
+    N(x;\mu,\sigma^2,\gamma) & := \exp(\gamma)\cdot \sqrt{\frac{1}{2\pi \sigma^2}} \cdot \exp\left(-\frac{1}{2}\frac{\left( x - \mu \right)^2}{\sigma^2}\right) \,,  \label{eq:n_def}                                       \\
+    G(x;\tau,\rho,\gamma)    & := \exp(\gamma)\cdot \sqrt{\frac{\rho}{2\pi}} \cdot \exp\left(-\frac{\tau^2}{2\rho}\right) \cdot \exp\left(\tau \cdot x + \rho \cdot \left(-\frac{x^2}{2}\right)\right) \,. \label{eq:g_def}
+\end{align}
+Note that the following transformations allow us to switch between the two different representations easily:
+\begin{align}
+    N(x;\mu,\sigma^2,\gamma) & = G\left(x;\mu\cdot\sigma^{-2},\sigma^{-2},\gamma\right)\,,  \label{eq:from_N_to_G} \\
+    G(x;\tau,\rho,\gamma)    & = N\left(x;\tau\cdot\rho^{-1},\rho^{-1},\gamma\right)\,,
+\end{align}
+and $\int_{-\infty}^{+\infty} N(x;\mu,\sigma^2,\gamma) = \int_{-\infty}^{+\infty} G(x;\tau,\rho,\gamma) = \exp(\gamma)$ for all values of $\mu, \tau, \sigma, \rho$ and $\gamma$.
+
+\section*{Multiplication}
+One of the most frequent operations that we need to perform in message passing and Bayesian inference is multiplying two Gaussian distributions and re-normalizing. The following theorem states an efficient and numerically stable way to achieve this as it relies on additions (mostly).
+\begin{thm} \label{thm:multiplication}
+    Given two non-normalized one-dimensional Gaussian distributions $G(x;\tau_1,\rho_1,\gamma_1)$ and $G(x;\tau_2,\rho_2,\gamma_2)$ over the same variable $x$ we have
+    \begin{align}
+        G(x;\tau_1,\rho_1,\gamma_1) \cdot G(x;\tau_2,\rho_2,\gamma_2) & = G(x;\tau_1 + \tau_2,\rho_1 + \rho_2,\gamma_1+\gamma_2) \cdot N\left(\mu_1;\mu_2,\sigma_1^2+\sigma_2^2,0\right) \label{eq:gauss_mul}\,,                                                                                      \\
+                                                                      & = G\left(x;\tau_1 + \tau_2,\rho_1 + \rho_2,\gamma_1+\gamma_2 - \frac{1}{2}\left(\log\left(2\pi \left(\sigma_1^2+\sigma_2^2\right)\right) - \frac{\left(\mu_1 - \mu_2\right)^2}{\sigma_1^2+\sigma_2^2}\right)\right) \nonumber
+    \end{align}
+    where $\sigma_1^2=\rho^{-1}$ and $\mu_1 = \tau_1\cdot\rho^{-1}$ (and similarly for $\sigma_2^2$ and $\mu_2$, respectively).
+\end{thm}
+\begin{proof}
+    Using \eqref{eq:g_def} we see that the left-hand side of \eqref{eq:gauss_mul} equals
+    \begin{align*}
+        \exp(\gamma_1+\gamma_2)\cdot \sqrt{\frac{\rho_1\rho_2}{(2\pi)^2}} \cdot \exp\left(-\frac{\tau_1^2}{2\rho_1}-\frac{\tau^2_2}{2\rho_2}\right) \cdot \exp\left(\left(\tau_1 + \tau_2\right) \cdot x + \left(\rho_1 + \rho_2\right) \cdot \left(-\frac{x^2}{2}\right)\right)\,.
+    \end{align*}
+    Next, we divide this expression by $G(x;\tau_1 + \tau_2,\rho_1 + \rho_2,\gamma_1+\gamma_2)$ to obtain
+    \begin{align*}
+        \sqrt{\frac{\rho_1\rho_2}{2\pi(\rho_1+\rho_2)}} \cdot \exp\left(-\frac{\tau_1^2}{2\rho_1}-\frac{\tau^2_2}{2\rho_2}+\frac{\left(\tau_1+\tau_2\right)^2}{2(\rho_1+\rho_2)}\right) \,.
+    \end{align*}
+    It remains to show that this expression equals $N\left(\mu_1;\mu_2,\sigma_1^2+\sigma_2^2,0\right)$. Using \eqref{eq:n_def} this is equivalent to
+    \begin{align*}
+        \sqrt{\frac{\rho_1\rho_2}{2\pi(\rho_1+\rho_2)}} = \sqrt{\frac{1}{2\pi\left(\sigma^2_1+\sigma^2_2\right)}}\quad\mbox{and} \quad
+        -\frac{\tau_1^2}{\rho_1}-\frac{\tau^2_2}{\rho_2}+\frac{\left(\tau_1+\tau_2\right)^2}{\rho_1+\rho_2} = -\frac{(\mu_1 - \mu_2)^2}{\sigma_1^2+\sigma_2^2}\,.
+    \end{align*}
+    Let's start with the first equality. Expanding \eqref{eq:from_N_to_G} we see that
+    \begin{align*}
+        \rho_1\rho_2\left(\rho_1+\rho_2\right)^{-1} & = \rho_1\rho_2\left(\rho_2\left(\rho_1^{-1}+\rho_2^{-1}\right)\rho_1\right)^{-1} = \left(\rho_1^{-1}+\rho_2^{-1}\right)^{-1} = \frac{1}{\sigma_1^2 + \sigma_2^2} \,,
+    \end{align*}
+    which proves the first equality. In order to prove the second equality, we use \eqref{eq:from_N_to_G} and $\tau = \mu\cdot\rho$ again to obtain
+    \begin{align*}
+        -\frac{\tau_1^2}{\rho_1}-\frac{\tau^2_2}{\rho_2}+\frac{\left(\tau_1+\tau_2\right)^2}{\rho_1+\rho_2} & =
+        -\mu_1^2\rho_1^2\rho_1^{-1} -\mu_2^2\rho_2^2\rho_2^{-1} + \left(\mu_1\rho_1+\mu_2\rho_2\right)^2\left(\rho_1+\rho_2\right)^{-1}                                                                                                                                                                                                            \\
+                                                                                                            & = -\mu_1^2\rho_1 -\mu_2^2\rho_2 + \left(\rho_2\left(\mu_1\rho_2^{-1}+\mu_2\rho_1^{-1}\right)\rho_1\right)^2\left(\rho_2\left(\rho_1^{-1}+\rho_2^{-1}\right)\rho_1\right)^{-1}                                                        \\
+                                                                                                            & = -\mu_1^2\rho_1 -\mu_2^2\rho_2 + \left(\mu_1\rho_2^{-1}+\mu_2\rho_1^{-1}\right)^2 \cdot \rho_2\rho_1\left(\rho_1^{-1}+\rho_2^{-1}\right)^{-1}                                                                                       \\
+                                                                                                            & = \frac{\left[-\mu_1^2\rho_2^{-1}\left(\rho_1^{-1}+\rho_2^{-1}\right) -\mu_2^2\rho_1^{-1}\left(\rho_1^{-1}+\rho_2^{-1}\right) + \left(\mu_1\rho_2^{-1}+\mu_2\rho_1^{-1}\right)^2\right] \cdot \rho_2\rho_1}{\rho_1^{-1}+\rho_2^{-1}} \\
+                                                                                                            & = \frac{\left[-\mu_1^2\rho_2^{-1}\rho_1^{-1}-\mu_1^2\rho_2^{-2} - \mu_2^2\rho_1^{-2} - \mu_2^2\rho_1^{-1}\rho_2^{-1} +
+        \mu_1^2\rho_2^{-2} + 2\mu_1\mu_2\rho_1^{-1}\rho_2^{-1} + \mu_2^2\rho_1^{-2}\right] \cdot \rho_2\rho_1}{\rho_1^{-1}+\rho_2^{-1}}                                                                                                                                                                                                            \\
+                                                                                                            & = \frac{\left[-\mu_1^2 - \mu_2^2 + 2\mu_1\mu_2\right] \cdot \rho_1^{-1}\rho_2^{-1}\rho_2\rho_1}{\rho_1^{-1}+\rho_2^{-1}}                                                                                                             \\
+                                                                                                            & = -\frac{\left(\mu_1 - \mu_2 \right)^2}{2\left(\sigma_1^2 + \sigma_2^2\right)} \,.
+    \end{align*}
+    The final line follows from using \eqref{eq:n_def} and noticing that
+    \begin{align*}
+        \log\left(N\left(\mu_1;\mu_2,\sigma_1^2+\sigma_2^2,0\right)\right) & = - \frac{1}{2}\left(\log\left(2\pi \left(\sigma_1^2+\sigma_2^2\right)\right) - \frac{\left(\mu_1 - \mu_2\right)^2}{\sigma_1^2+\sigma_2^2}\right)\,.
+    \end{align*}
+\end{proof}
+
+\section*{Division}
+An equally frequent operation that we need to perform in message passing is dividing two Gaussian distributions and re-normalizing them. The following theorem states an efficient and numerically stable way to achieve this.
+\begin{thm} \label{thm:division}
+    Given two non-normalized one-dimensional Gaussian distributions $G(x;\tau_1,\rho_1,\gamma_1)$ and $G(x;\tau_2,\rho_2,\gamma_2)$ over the same variable $x$ we have
+    \begin{align}
+        \frac{G(x;\tau_1,\rho_1,\gamma_1)}{G(x;\tau_2,\rho_2,\gamma_2)} & = G(x;\tau_1 - \tau_2,\rho_1 - \rho_2,\gamma_1 - \gamma_2) \cdot \frac{1}{N\left(\frac{\tau_1-\tau_2}{\rho_1-\rho_2};\frac{\tau_2}{\rho_2},\frac{1}{\rho_1-\rho_2}+\frac{1}{\rho_2},0\right)} \,, \label{eq:gauss_div}                                                \\
+                                                                        & = G\left(x;\tau_1 - \tau_2,\rho_1 - \rho_2,\gamma_1 - \gamma_2 + \log\left(\sigma_2^2\right)+\frac{1}{2}\left(\log\left(\frac{2\pi}{\sigma_2^2-\sigma_1^2}\right) + \frac{\left(\mu_1 - \mu_2\right)^2}{\sigma_2^2-\sigma_1^2}\right)\right) \,,\label{eq:gauss_div2}
+    \end{align}
+    where $\sigma_1^2=\rho_1^{-1}$ and $\mu_1 = \tau_1\cdot\rho_1^{-1}$ (and similarly for $\sigma_2^2$ and $\mu_2$, respectively).
+\end{thm}
+\begin{proof}
+    The first equality follows directly from Theorem \ref{thm:multiplication}. Rewriting \eqref{eq:gauss_mul} and dividing the expression by $G(x;\tau_2,\rho_2,\gamma_2)$ and $N\left(\mu_3;\mu_2,\sigma_2^2+\sigma_3^2\right)$ and we see that
+    \begin{align*}
+        \frac{G(x;\tau_3,\rho_3,\gamma_3)}{N\left(\mu_3;\mu_2,\sigma_2^2+\sigma_3^2,0\right)} & = \frac{G(x;\tau_2 + \tau_3,\rho_2 + \rho_3,\gamma_2 + \gamma_3)}{G(x;\tau_2,\rho_2,\gamma_2)}
+    \end{align*}
+    Now setting $\tau_1 = \tau_2+\tau_3$, $\rho_1 = \rho_2+\rho_3$ and $\gamma_1 = \gamma_2+\gamma_3$ and rearranging for $\tau_3$, $\rho_3$ and $\gamma_3$ we have
+    \begin{align*}
+        \frac{G(x;\tau_1,\rho_1,\gamma_1)}{G(x;\tau_2,\rho_2,\gamma_2)} & = G(x;\tau_1-\tau_2,\rho_1-\rho_2,\gamma_1-\gamma_2) \cdot \frac{1}{N\left(\frac{\tau_1-\tau_2}{\rho_1-\rho_2};\frac{\tau_2}{\rho_2},\frac{1}{\rho_1-\rho_2}+\frac{1}{\rho_2},0\right)} \,,
+    \end{align*}
+    where we used \eqref{eq:from_N_to_G} in the $N(\cdot)$ term. It remains to show that
+    \begin{align*}
+        -\log\left(N\left(0;\underbrace{\frac{\tau_1-\tau_2}{\rho_1-\rho_2}-\frac{\tau_2}{\rho_2}}_{\mu},\underbrace{\frac{1}{\rho_1-\rho_2}+\frac{1}{\rho_2}}_{\sigma^2},0\right)\right) = \log\left(\sigma_2^2\right)+\frac{1}{2}\left(\log\left(\frac{2\pi}{\sigma_2^2-\sigma_1^2}\right) + \frac{\left(\mu_1 - \mu_2\right)^2}{\sigma_2^2-\sigma_1^2}\right) \,.
+    \end{align*}
+    Let us start with deriving the expression for $\sigma^2$. By virtue of \eqref{eq:from_N_to_G} we have
+    \begin{align*}
+        \sigma^2 & = \frac{1}{\rho_1 - \rho_2} + \frac{1}{\rho_2} = \frac{\rho_2 + (\rho_1 - \rho_2)}{(\rho_1 - \rho_2)\rho_2} = \frac{\rho_1}{(\rho_1 - \rho_2)\rho_2} = \frac{\sigma_2^2}{\left(\frac{1}{\sigma_1^2} - \frac{1}{\sigma_2^2}\right)\sigma_1^2} = \frac{\sigma_2^2}{\left(\frac{\sigma_2^2 - \sigma_1^2}{\sigma_1^2 \sigma_2^2}\right)\sigma_1^2} = \frac{\sigma_2^2}{\sigma_2^2 - \sigma_1^2} \cdot \sigma_2^2 \,.
+    \end{align*}
+    Also, using \eqref{eq:from_N_to_G} for $\mu$ we get
+    \begin{align*}
+        \mu & = \frac{\tau_1-\tau_2}{\rho_1-\rho_2}-\frac{\tau_2}{\rho_2} = \frac{\frac{\mu_1}{\sigma_1^2}-\frac{\mu_2}{\sigma_2^2}}{\frac{1}{\sigma_1^2} - \frac{1}{\sigma_2^2}} -\mu_2 = \frac{\mu_1\sigma_2^2-\mu_2\sigma_1^2}{\sigma_2^2 - \sigma_1^2} - \mu_2 = \frac{\mu_1\sigma_2^2-\mu_2\sigma_1^2 - \mu_2\left(\sigma_2^2 - \sigma_1^2\right)}{\sigma_2^2 - \sigma_1^2} = \frac{\mu_1 - \mu_2}{\sigma_2^2 - \sigma_1^2} \cdot \sigma_2^2 \,.
+    \end{align*}
+    Finally, using \eqref{eq:n_def} we have
+    \begin{align*}
+        -\log\left(N\left(0;\mu,\sigma^2,0\right)\right) & = -\log\left(\sqrt{\frac{1}{2\pi \sigma^2}}\right) + \frac{\mu^2}{2\sigma^2} = -\frac{1}{2}\log\left(\frac{\sigma_2^2 - \sigma_1^2}{2\pi \sigma_2^4}\right) + \frac{1}{2}\frac{\left(\mu_1-\mu_2\right)^2}{\sigma_2^2-\sigma_1^2} \,.
+    \end{align*}
+\end{proof}
+
+\section*{Linear Function of Gaussians}
+When we consider the computation of a Gaussian posterior, we often have a prior $N\left(w;\mu,\sigma^2,\gamma\right)$ over $w$ and a likelihood $N\left(y;aw + b,\beta^2,0\right)$ where the mean is a linear function of the parameter $w$. If we want to use Theorem \ref{thm:multiplication} or \ref{thm:division}, we need to change the likelihood into a Gaussian distribution over $w$.
+\begin{thm} \label{thm:linear}
+    Given a non-normalized one-dimensional Gaussian distributions $N(y;aw + b,\beta^2,\gamma)$ we have for any $a \not= 0$, $b \in \mathbb{R}$ and $\beta \in \mathbb{R}^+$
+    \begin{align}
+        N\left(y;aw + b, \beta^2,\gamma\right) = N\left(w;a^{-1}(y - b), a^{-2}\beta^2,\gamma - \log(a)\right) \,.
+    \end{align}
+\end{thm}
+
+\begin{proof}
+    Using the definition \eqref{eq:n_def} we see that
+    \begin{align*}
+        N\left(y;aw + b, \beta^2,\gamma\right) & =
+        \exp(\gamma)\cdot \sqrt{\frac{1}{2\pi \beta^2}} \cdot \exp\left(-\frac{1}{2}\frac{\left(y - a\cdot w - b\right)^2}{\beta^2}\right)                                                                               \\
+                                               & = \exp(\gamma)\cdot \sqrt{\frac{a^{-2}}{2\pi a^{-2}\beta^2}} \cdot \exp\left(-\frac{1}{2}\frac{\left(a\cdot\left(a^{-1}y - w - a^{-1}b\right)\right)^2}{\beta^2}\right) \\
+                                               & = \exp(\gamma-\log(a))\cdot \sqrt{\frac{1}{2\pi a^{-2}\beta^2}} \cdot \exp\left(-\frac{1}{2}\frac{\left(a^{-1}\left(y - b\right) - w\right)^2}{a^{-2}\beta^2}\right)    \\
+                                               & = N\left(w;a^{-1}(y - b), a^{-2}\beta^2,\gamma - \log(a)\right) \,.
+    \end{align*}
+\end{proof}
+
+\begin{cor}
+    For any $a \not= 0$, $b \in \mathbb{R}$ and $\beta \in \mathbb{R}^+$, given a Gaussian prior distribution $p(w) = N(w;\mu,\sigma^2,0)$, and a Gaussian likelihood of a linear function of $w$, $p(y|w) = N(y;aw + b,\beta^2,0)$, we have the following
+    \begin{align}
+        p(w|y) & = N\left(w,m,s^2,0\right)\,,                           \\
+        p(y)   & = N\left(y;a\mu + b,\beta^2 + a^2\sigma^2,0\right) \,,
+    \end{align}
+    where $s^2 = \left(\sigma^{-2} + a^{2}\beta^{-2}\right)^{-1}$ and $m=s^2\cdot\left(a\beta^{-2}(y-b)+\sigma^{-2}\mu\right)$.
+\end{cor}
+
+\begin{proof}
+    Using Theorem \ref{thm:linear}, $p(y|w)$ can be written as $N\left(w;a^{-1}(y - b), a^{-2}\beta^2,-\log(a)\right)$. Using \eqref{eq:from_N_to_G} and \eqref{eq:gauss_mul}
+    \begin{align*}
+        p(w) \cdot p(y|w) & = G\left(w;\sigma^{-2}\mu,\sigma^{-2},0\right) \cdot G\left(w;a\beta^{-2}(y - b), a^2\beta^{-2},-\log(a)\right)                                                \\
+                          & = G\left(w;a\beta^{-2}(y - b) + \sigma^{-2}\mu,\sigma^{-2} + a^2\beta^{-2},-\log(a)\right) \cdot N\left(\mu;a^{-1}(y - b),a^{-2}\beta^2 + \sigma^{2},0 \right) \\
+                          & = G\left(w;a\beta^{-2}(y - b) + \sigma^{-2}\mu,\sigma^{-2} + a^2\beta^{-2},-\log(a)\right) \cdot N\left(y;a\mu + b,\beta^2 + a^2\sigma^{2},\log(a)\right)      \\
+                          & = N\left(w,m,s^2,0\right) \cdot N\left(y;a\mu + b,\beta^2 + a^2\sigma^2,0\right) = p(w|y) \cdot p(y) \,.
+    \end{align*}
+\end{proof}
+
+\end{document}
