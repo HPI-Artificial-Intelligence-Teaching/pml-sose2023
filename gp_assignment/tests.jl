@@ -3,7 +3,6 @@ using Distributions
 
 using Test
 
-
 @testset "RBF Kernel implementation" begin
     x1 = [1,2,6,8,10]
     x2 = [1,2,6,8,5]
