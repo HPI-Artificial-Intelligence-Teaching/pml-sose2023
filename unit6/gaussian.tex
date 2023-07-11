@@ -88,7 +88,7 @@ One of the most frequent operations that we need to perform in message passing a
     Given two non-normalized one-dimensional Gaussian distributions $G(x;\tau_1,\rho_1,\gamma_1)$ and $G(x;\tau_2,\rho_2,\gamma_2)$ over the same variable $x$ we have
     \begin{align}
         G(x;\tau_1,\rho_1,\gamma_1) \cdot G(x;\tau_2,\rho_2,\gamma_2) & = G(x;\tau_1 + \tau_2,\rho_1 + \rho_2,\gamma_1+\gamma_2) \cdot N\left(\mu_1;\mu_2,\sigma_1^2+\sigma_2^2,0\right) \label{eq:gauss_mul}\,,                                                                                      \\
-                                                                      & = G\left(x;\tau_1 + \tau_2,\rho_1 + \rho_2,\gamma_1+\gamma_2 - \frac{1}{2}\left(\log\left(2\pi \left(\sigma_1^2+\sigma_2^2\right)\right) - \frac{\left(\mu_1 - \mu_2\right)^2}{\sigma_1^2+\sigma_2^2}\right)\right) \nonumber
+                                                                      & = G\left(x;\tau_1 + \tau_2,\rho_1 + \rho_2,\gamma_1+\gamma_2 - \frac{1}{2}\left(\log\left(2\pi \left(\sigma_1^2+\sigma_2^2\right)\right) + \frac{\left(\mu_1 - \mu_2\right)^2}{\sigma_1^2+\sigma_2^2}\right)\right) \nonumber
     \end{align}
     where $\sigma_1^2=\rho^{-1}$ and $\mu_1 = \tau_1\cdot\rho^{-1}$ (and similarly for $\sigma_2^2$ and $\mu_2$, respectively).
 \end{thm}
@@ -124,7 +124,7 @@ One of the most frequent operations that we need to perform in message passing a
     \end{align*}
     The final line follows from using \eqref{eq:n_def} and noticing that
     \begin{align*}
-        \log\left(N\left(\mu_1;\mu_2,\sigma_1^2+\sigma_2^2,0\right)\right) & = - \frac{1}{2}\left(\log\left(2\pi \left(\sigma_1^2+\sigma_2^2\right)\right) - \frac{\left(\mu_1 - \mu_2\right)^2}{\sigma_1^2+\sigma_2^2}\right)\,.
+        \log\left(N\left(\mu_1;\mu_2,\sigma_1^2+\sigma_2^2,0\right)\right) & = - \frac{1}{2}\left(\log\left(2\pi \left(\sigma_1^2+\sigma_2^2\right)\right) + \frac{\left(\mu_1 - \mu_2\right)^2}{\sigma_1^2+\sigma_2^2}\right)\,.
     \end{align*}
 \end{proof}
 
